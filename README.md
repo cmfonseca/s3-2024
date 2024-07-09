@@ -1,4 +1,4 @@
-# SIGEVO Summer School 2023 Modelling Projects 
+# SIGEVO Summer School 2024 Modelling Projects 
 
 This repository contains all relevant files for the SIGEVO Summer
 School 2024 modelling projects. It is organized as follows:
