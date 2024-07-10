@@ -1,4 +1,20 @@
 # SIGEVO Summer School 2024 Modelling Projects 
+PROJECT: 3D PRINTING
+
+## IMPLEMENTED SO FAR:
+- Code foundation
+- Greedy Construction
+
+## HOW TO USE:
+From pwd: `src/`
+```bash 
+python base.py --log-level debug --input-file '../data/3d-printing/sample.txt' --csearch greedy
+```
+```bash 
+python base.py --input-file '../data/3d-printing/sample.txt' --csearch greedy
+```
+
+## PROJECT INFORMATION
 
 This repository contains all relevant files for the SIGEVO Summer
 School 2024 modelling projects. It is organized as follows:

@@ -44,5 +44,5 @@ def greedy_construction(solution: Solution) -> Solution:
         if best is None:
             break
         solution.add(best[1])
-        logging.info(f"Component added, lb increment: {best[0]}")
+        #logging.info(f"Component added, lb increment: {best[0]}")
     return solution
