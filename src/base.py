@@ -43,7 +43,7 @@ class LocalMove:
 class Solution:
     def __init__(self, problem: Problem, order: Optional[List[int]] = None, objective: int = 0) -> None:
         self.problem = problem
-        self.order = order if order is not None else self.random_permutation_fisher_yates_shuffle()
+        self.order = order if order is not None else self.random_permutation_sparse_fisher_yates_shuffle()
         self.objective_value = self.calculate_objective()
         self.best_solutions: List[Tuple[List[int], int, List[int], List[int]]] = []
         self.top_n = 5  # Number of top solutions to track
@@ -59,14 +59,22 @@ class Solution:
             p[i], p[j] = p[j], p[i]
         logging.debug(f"Initial random permutation with Fisher-Yates shuffle: {p}")
         return p
-    
+
     def random_permutation_sparse_fisher_yates_shuffle(self) -> List[int]:
         """
         Generate a random permutation of the components using Sparse Fisher-Yates shuffle.
         """
-        logging.debug(f"Initial random permutation with Sparse Fisher-Yates shuffle: {p}")
-        raise NotImplementedError
-
+        n = self.problem.n
+        p = dict()
+        permutation = []
+        for i in range(n-1, -1, -1):
+            r = random.randint(0, i)
+            permutation.append(p.get(r, r))
+            if i != r:
+                p[r] = p.get(i, i)
+        permutation.reverse()  # Since we are appending, the order will be reversed
+        logging.debug(f"Initial random permutation with Sparse Fisher-Yates shuffle: {permutation}")
+        return permutation
 
     def calculate_objective_value(self, order: List[int]) -> Tuple[int, List[int], List[int]]:
         """Calculate the objective value, completion times, and individual costs for a given order."""
@@ -335,6 +343,17 @@ class Problem:
         if self.use_local_search:
             initial_order = list(range(self.n))
             random.shuffle(initial_order)
+            logging.debug(f"Initial random permutation: {initial_order}")
+            return Solution(self, initial_order, 0)
+        else:
+            return Solution(self, [], 0)
+        
+    def empty_solution(self) -> Solution:
+        """
+        Create a solution based on the presence of local search methods.
+        """
+        if self.use_local_search:
+            initial_order = list(Solution(self).random_permutation_sparse_fisher_yates_shuffle())
             logging.debug(f"Initial random permutation: {initial_order}")
             return Solution(self, initial_order, 0)
         else:
