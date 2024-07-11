@@ -25,12 +25,18 @@ import logging
 Objective = Any
 
 class Component:
+    model_index: int
+
     @property
     def cid(self) -> Hashable:
-        raise NotImplementedError
+        # unique identifier for component used for hashing/comparison.
+        return self.model_index
 
 class LocalMove:
-    ...
+
+    # define a swap  
+    i: int
+    j: int
 
 class Solution:
 
@@ -53,7 +59,11 @@ class Solution:
         solution. However, this does not need to be a deepcopy.
         """
         # Check the TCP example. This is low-hanging fruit
-        raise NotImplementedError
+        new_solution = Solution(self.problem)
+        new_solution.u = self.u[:]  # copy of the sequence.
+        new_solution.cost = self.cost  # also the cost
+        return new_solution
+        #raise NotImplementedError
 
     def is_feasible(self) -> bool:
         """
@@ -92,14 +102,22 @@ class Solution:
         Return an iterable (generator, iterator, or iterable object)
         over all components that can be added to the solution
         """
-        raise NotImplementedError
+        if len(self.u) < self.problem.T:
+            #generates all possible model indices possible to added.
+            for model_index in range(self.problem.M):
+                yield Component(model_index) #grabs one component as needed
+        #raise NotImplementedError
 
     def local_moves(self) -> Iterable[LocalMove]:
         """
         Return an iterable (generator, iterator, or iterable object)
         over all local moves that can be applied to the solution
         """
-        raise NotImplementedError
+        #all possible pairs of indices for swapping.
+        for i in range(len(self.u)):
+            for j in range(i + 1, len(self.u)):
+                yield LocalMove(i, j) #grab one pair as needed
+        #raise NotImplementedError
 
     def random_local_move(self) -> Optional[LocalMove]:
         """
@@ -108,7 +126,13 @@ class Solution:
         Note: repeated calls to this method may return the same
         local move.
         """
-        raise NotImplementedError
+        if len(self.u) >= 2:
+            i = random.randrange(len(self.u))
+            j = random.randrange(len(self.u))
+            return LocalMove(i, j)
+        else:
+            return None
+        #raise NotImplementedError
 
     def random_local_moves_wor(self) -> Iterable[LocalMove]:
         """
@@ -116,7 +140,10 @@ class Solution:
         over all local moves (in random order) that can be applied to
         the solution.
         """
-        raise NotImplementedError
+        moves = list(self.local_moves())
+        random.shuffle(moves)
+        return moves
+        #raise NotImplementedError
 
     def heuristic_add_move(self) -> Optional[Component]:
         """
@@ -132,7 +159,9 @@ class Solution:
         Note: this invalidates any previously generated components and
         local moves.
         """
-        raise NotImplementedError
+        self.u.append(component.model_index)
+        self.cost = self.objective()  #update cost after adding component.
+        #raise NotImplementedError
 
     def step(self, lmove: LocalMove) -> None:
         """
@@ -141,7 +170,10 @@ class Solution:
         Note: this invalidates any previously generated components and
         local moves.
         """
-        raise NotImplementedError
+        i, j = lmove.i, lmove.j
+        self.u[i], self.u[j] = self.u[j], self.u[i]  #perform swap
+        self.cost = self.objective()  #update cost after swap
+        #raise NotImplementedError
 
     def objective_incr_local(self, lmove: LocalMove) -> Optional[Objective]:
         """
@@ -149,7 +181,12 @@ class Solution:
         local move. If the objective value is not defined after
         applying the local move return None.
         """
-        raise NotImplementedError
+        current_cost = self.objective()
+        self.step(lmove)
+        new_cost = self.objective()
+        self.step(lmove)  #revert back to original state
+        return new_cost - current_cost
+        #raise NotImplementedError
 
     def lower_bound_incr_add(self, component: Component) -> Optional[Objective]:
         """
@@ -170,7 +207,9 @@ class Solution:
         """
         Returns an iterable to the components of a solution
         """
-        raise NotImplementedError
+        return [Component(i) for i in range(self.problem.M)]
+
+
 
 
 class Problem:
