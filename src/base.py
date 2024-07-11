@@ -75,20 +75,23 @@ class Solution:
         permutation.reverse()  # Since we are appending, the order will be reversed
         logging.debug(f"Initial random permutation with Sparse Fisher-Yates shuffle: {permutation}")
         return permutation
-
+    
     def calculate_objective_value(self, order: List[int]) -> Tuple[int, List[int], List[int]]:
         """Calculate the objective value, completion times, and individual costs for a given order."""
         if not order:
             return 0, [], []
         p, w, d = self.problem.p, self.problem.w, self.problem.d
-        C = [0] * len(order)
-        C[0] = p[order[0]]
-        for i in range(1, len(order)):
-            C[i] = C[i-1] + p[order[i]]
-        individual_costs = [w[order[i]] * max(C[i] - d[order[i]], 0) for i in range(len(order))]
-        total_cost = sum(individual_costs)
+        C = 0
+        total_cost = 0
+        individual_costs = []
+        for i in order:
+            C += p[i]
+            T = max(C - d[i], 0)
+            cost = w[i] * T
+            individual_costs.append(cost)
+            total_cost += cost
         logging.debug(f"Order: {order}, Completion times: {C}, Total cost: {total_cost}")
-        return total_cost, C, individual_costs
+        return total_cost, [C] * len(order), individual_costs  # Adjust completion times if needed
 
     def calculate_objective(self) -> int:
         """Calculate the objective value based on the current order."""
@@ -328,6 +331,9 @@ class Problem:
         Create a problem from a text I/O source `f`
         """
         nums = list(map(int, f.read().strip().split()))
+        if len(nums) % 3 != 0:
+            logging.error(f"Input length of numbers not divisible by 3")
+            return None
         n = len(nums) // 3
         p = nums[:n]
         w = nums[n:2*n]
