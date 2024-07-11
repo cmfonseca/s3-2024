@@ -5,11 +5,10 @@ PROJECT: 3D PRINTING
 - Code foundation
 - Greedy Construction
 - First-improvement local search
+- Evaluator compatible
 
 ## TODO:
 - Local search: best-improvement local search
-- Data loader for Weighted Tardiness Scheduling Problem from https://infoicet.ufam.edu.br/benchmark-instances/weighted-tardiness/ (the data format is different from the sample provided in the project)
-- Set the solution for the WT dataset for the Evalutor
 
 ## HOW TO USE:
 Use the debug mode to see the steps of the algorithm.
@@ -33,7 +32,25 @@ python base.py --input-file '../data/3d-printing/sample.txt' --lsearch fi
 
 - For the evaluator:
 ```bash 
-python evaluators/3d_printing.py '../data/3d-printing/sample.txt' '../data/3d-printing/sample_solution.txt'
+python base.py --log-level debug --input-file '../data/3d-printing/sample.txt' --lsearch fi --output-file '../data/3d-printing/my_sample_output.txt'
+```
+```bash 
+python evaluators/3d_printing.py '../data/3d-printing/sample.txt' '../data/3d-printing/my_sample_output.txt'
+```
+
+```bash 
+python base.py --input-file '../data/3d-printing/wt40-1.txt' --lsearch fi --output-file '../data/3d-printing/my_wt40-1_output.txt'
+```
+```bash 
+python evaluators/3d_printing.py '../data/3d-printing/wt40-1.txt' '../data/3d-printing/my_wt40-1_output.txt'
+```
+
+```bash 
+python base.py --input-file '../data/3d-printing/wt50-1.txt' --lsearch fi --output-file '../data/3d-printing/my_wt50-1_output.txt' && python evaluators/3d_printing.py '../data/3d-printing/wt50-1.txt' '../data/3d-printing/my_wt50-1_output.txt'
+```
+
+```bash 
+python base.py --input-file '../data/3d-printing/wt100-1.txt' --lsearch fi --output-file '../data/3d-printing/my_wt100-1_output.txt' && python evaluators/3d_printing.py '../data/3d-printing/wt100-1.txt' '../data/3d-printing/my_wt100-1_output.txt'
 ```
 
 ## PROJECT INFORMATION
