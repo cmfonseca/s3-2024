@@ -33,6 +33,10 @@ class LocalMove:
     ...
 
 class Solution:
+
+    def __init__(self) -> None:
+        self.cost = None  # Get it with objective
+
     def output(self) -> str:
         """
         Generate the output string for this solution
@@ -153,19 +157,35 @@ class Solution:
         """
         raise NotImplementedError
 
+
 class Problem:
     @classmethod
     def from_textio(cls, f: TextIO) -> Problem:
         """
         Create a problem from a text I/O source `f`
         """
-        raise NotImplementedError
+        data = f.readlines()
+        M = int(data[0].split()[0])
+        P = int(data[0].split()[1])
+        d = [int(j) for j in data[1].split()]
+        A = []
+        for p in range(2,P):
+            x = data[p].splitlines()[0].split()
+            A.append([int(i) for i in x])
+
+        return cls(M, P, d, A)
+
+    def __init__(self, M, P, d, A) -> None:
+        self.M = M
+        self.P = P
+        self.d = d
+        self.A = A
 
     def empty_solution(self) -> Solution:
         """
         Create an empty solution (i.e. with no components).
         """
-        raise NotImplementedError
+        return None
 
 
 if __name__ == '__main__':
