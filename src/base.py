@@ -25,19 +25,31 @@ import logging
 Objective = Any
 
 class Component:
+    model_index: int
+
     @property
     def cid(self) -> Hashable:
-        raise NotImplementedError
+        # unique identifier for component used for hashing/comparison.
+        return self.model_index
 
 class LocalMove:
-    ...
+
+    # define a swap  
+    i: int
+    j: int
 
 class Solution:
+
+    def __init__(self, problem: Problem) -> None:
+        self.cost = None  # Should we store the cost? should we calculate every time with self.objective?
+        self.problem = problem
+        self.u = [] # this is obviously temporary
+
     def output(self) -> str:
         """
         Generate the output string for this solution
         """
-        raise NotImplementedError
+        return "\n".join(map(str, self.u))
 
     def copy(self) -> Solution:
         """
@@ -46,20 +58,37 @@ class Solution:
         Note: changes to the copy must not affect the original
         solution. However, this does not need to be a deepcopy.
         """
-        raise NotImplementedError
+        # Check the TCP example. This is low-hanging fruit
+        new_solution = Solution(self.problem)
+        new_solution.u = self.u[:]  # copy of the sequence.
+        new_solution.cost = self.cost  # also the cost
+        return new_solution
+        #raise NotImplementedError
 
     def is_feasible(self) -> bool:
         """
         Return whether the solution is feasible or not
         """
-        raise NotImplementedError
+        # the length is 10, which is T (available timeslots)
+        # and all u_i in u are smaller than M
+        return len(self.u) == self.problem.T and all(
+            map(lambda x: (0 <= x < self.problem.M), self.u))
 
     def objective(self) -> Optional[Objective]:
         """
         Return the objective value for this solution if defined, otherwise
         should return None
         """
-        raise NotImplementedError
+        rp = [sum(self.problem.a[p][m] * self.problem.d[m] for m in range(self.problem.M)) \
+              for p in range(self.problem.P)]
+
+        cost = 0
+        for t in range(1, self.problem.T + 1):
+            for p in range(self.problem.P):
+                actual_demand = sum(self.problem.a[p][self.u[i]] for i in range(t))
+                target_demand = t * rp[p] / self.problem.T
+                cost += (target_demand - actual_demand) ** 2
+        return cost
 
     def lower_bound(self) -> Optional[Objective]:
         """
@@ -73,14 +102,22 @@ class Solution:
         Return an iterable (generator, iterator, or iterable object)
         over all components that can be added to the solution
         """
-        raise NotImplementedError
+        if len(self.u) < self.problem.T:
+            #generates all possible model indices possible to added.
+            for model_index in range(self.problem.M):
+                yield Component(model_index) #grabs one component as needed
+        #raise NotImplementedError
 
     def local_moves(self) -> Iterable[LocalMove]:
         """
         Return an iterable (generator, iterator, or iterable object)
         over all local moves that can be applied to the solution
         """
-        raise NotImplementedError
+        #all possible pairs of indices for swapping.
+        for i in range(len(self.u)):
+            for j in range(i + 1, len(self.u)):
+                yield LocalMove(i, j) #grab one pair as needed
+        #raise NotImplementedError
 
     def random_local_move(self) -> Optional[LocalMove]:
         """
@@ -89,7 +126,13 @@ class Solution:
         Note: repeated calls to this method may return the same
         local move.
         """
-        raise NotImplementedError
+        if len(self.u) >= 2:
+            i = random.randrange(len(self.u))
+            j = random.randrange(len(self.u))
+            return LocalMove(i, j)
+        else:
+            return None
+        #raise NotImplementedError
 
     def random_local_moves_wor(self) -> Iterable[LocalMove]:
         """
@@ -97,8 +140,11 @@ class Solution:
         over all local moves (in random order) that can be applied to
         the solution.
         """
-        raise NotImplementedError
-            
+        moves = list(self.local_moves())
+        random.shuffle(moves)
+        return moves
+        #raise NotImplementedError
+
     def heuristic_add_move(self) -> Optional[Component]:
         """
         Return the next component to be added based on some heuristic
@@ -113,7 +159,9 @@ class Solution:
         Note: this invalidates any previously generated components and
         local moves.
         """
-        raise NotImplementedError
+        self.u.append(component.model_index)
+        self.cost = self.objective()  #update cost after adding component.
+        #raise NotImplementedError
 
     def step(self, lmove: LocalMove) -> None:
         """
@@ -122,7 +170,10 @@ class Solution:
         Note: this invalidates any previously generated components and
         local moves.
         """
-        raise NotImplementedError
+        i, j = lmove.i, lmove.j
+        self.u[i], self.u[j] = self.u[j], self.u[i]  #perform swap
+        self.cost = self.objective()  #update cost after swap
+        #raise NotImplementedError
 
     def objective_incr_local(self, lmove: LocalMove) -> Optional[Objective]:
         """
@@ -130,7 +181,12 @@ class Solution:
         local move. If the objective value is not defined after
         applying the local move return None.
         """
-        raise NotImplementedError
+        current_cost = self.objective()
+        self.step(lmove)
+        new_cost = self.objective()
+        self.step(lmove)  #revert back to original state
+        return new_cost - current_cost
+        #raise NotImplementedError
 
     def lower_bound_incr_add(self, component: Component) -> Optional[Objective]:
         """
@@ -151,7 +207,9 @@ class Solution:
         """
         Returns an iterable to the components of a solution
         """
-        raise NotImplementedError
+        return [Component(i) for i in range(self.problem.M)]
+        #raise NotImplementedError
+
 
 class Problem:
     @classmethod
