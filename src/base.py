@@ -229,14 +229,16 @@ class Solution:
             logging.debug("Order length less than 2, no local moves possible")
             return iter([])  # No local moves possible if order length is less than 2
 
-        indices = list(range(n))
-        random.shuffle(indices)
-        logging.debug(f"Generated random order of indices for local moves: {indices}")
+        #indices = list(range(n))
+        #random.shuffle(indices)
+        # Use the random_permutation_sparse_fisher_yates_shuffle method to generate random indices
+        random_indices = self.random_permutation_sparse_fisher_yates_shuffle()
+        logging.debug(f"Generated random order of indices for local moves: {random_indices}")
 
         for i in range(n):
             for j in range(i + 1, n):
-                logging.debug(f"Yielding LocalMove with swap indices: {indices[i]}, {indices[j]}")
-                yield LocalMove(indices[i], indices[j])
+                logging.debug(f"Yielding LocalMove with swap indices: {random_indices[i]}, {random_indices[j]}")
+                yield LocalMove(random_indices[i], random_indices[j])
 
     def objective_incr_local(self, lmove: LocalMove) -> Optional[int]:
         """
@@ -341,24 +343,14 @@ class Problem:
 
         print(p, w, d)
         return cls(p, w, d)
-
-    def empty_solution(self) -> Solution:
-        """
-        Create a solution based on the presence of local search methods.
-        """
-        if self.use_local_search:
-            initial_order = list(range(self.n))
-            random.shuffle(initial_order)
-            logging.debug(f"Initial random permutation: {initial_order}")
-            return Solution(self, initial_order, 0)
-        else:
-            return Solution(self, [], 0)
         
     def empty_solution(self) -> Solution:
         """
         Create a solution based on the presence of local search methods.
         """
         if self.use_local_search:
+            # initial_order = list(range(self.n))
+            # random.shuffle(initial_order)
             initial_order = list(Solution(self).random_permutation_sparse_fisher_yates_shuffle())
             logging.debug(f"Initial random permutation: {initial_order}")
             return Solution(self, initial_order, 0)
