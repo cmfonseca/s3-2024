@@ -281,17 +281,20 @@ class Solution:
         self.objective_value = self.calculate_objective()
         logging.debug(f"New order after LocalMove: {self.order}, New objective value: {self.objective_value}")
 
+    def local_moves(self) -> Iterable[LocalMove]:
+        """
+        Return an iterable (generator, iterator, or iterable object)
+        over all local moves that can be applied to the solution.
+        """
+        n = len(self.order)
+        for i in range(n):
+            for j in range(i + 1, n):
+                yield LocalMove(i, j)
+
     def lower_bound(self) -> Optional[Objective]:
         """
         Return the lower bound value for this solution if defined,
         otherwise return None
-        """
-        raise NotImplementedError
-
-    def local_moves(self) -> Iterable[LocalMove]:
-        """
-        Return an iterable (generator, iterator, or iterable object)
-        over all local moves that can be applied to the solution
         """
         raise NotImplementedError
 
