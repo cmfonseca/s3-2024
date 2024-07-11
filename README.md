@@ -3,21 +3,26 @@ PROJECT: 3D PRINTING
 
 ## IMPLEMENTED SO FAR:
 - Code foundation
-- Greedy Construction
-- First-improvement local search
-- Best-improvement local search
 - Evaluator compatible
+- Constructive search
+  - Greedy Construction
+  - GRASP
+  - Ant System
+  - MMAS
+- Local Search
+  - First-improvement 
+  - Best-improvement
+  - RLS
+  - SA
+
 
 ## TODO:
-- heuristic construction
-- ant system
-- beam search
-- grasp
-- ils
-- mmas
-- tls
-- sa
-- other solvers
+- Constructive search
+  - heuristic construction
+  - beam search
+- Local Search
+  - ILS
+- Other Solvers for fun like i-race
 
 
 ## HOW TO USE:
@@ -46,6 +51,20 @@ python base.py --input-file '../data/3d-printing/sample.txt' --lsearch fi
 ```bash
 python base.py --input-file '../data/3d-printing/sample.txt' --lsearch bi
 ```
+
+  - best-improvement local search:
+```bash
+python base.py --input-file '../data/3d-printing/sample.txt' --lsearch sa
+```
+
+- Piping the construction as bootstrapping and the local search:
+```bash
+python base.py --input-file '../data/3d-printing/sample.txt' --csearch greedy --lsearch sa
+```
+```bash
+python base.py --input-file '../data/3d-printing/wt100-1.txt' --csearch greedy --lsearch fi --output-file '../data/3d-printing/my_wt100-1_output.txt' && python evaluators/3d_printing.py '../data/3d-printing/wt100-1.txt' '../data/3d-printing/my_wt100-1_output.txt'
+```
+
 
 - For the evaluator:
 ```bash 

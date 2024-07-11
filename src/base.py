@@ -104,12 +104,30 @@ class Solution:
         component return None.
         """
         new_order = self.order + [component.cid]
-        current_cost = self.calculate_objective()
-        new_cost, _, _ = self.calculate_objective_value(new_order)
-        lookahead_cost = self.calculate_lookahead_cost(new_order, depth=4)  # Increased look-ahead depth
-        cost_incr = new_cost - current_cost + lookahead_cost
-        logging.debug(f"Component {component.cid} would result in new cost: {new_cost}, increment: {cost_incr}, lookahead: {lookahead_cost}")
+        current_cost, _, current_individual_costs = self.calculate_objective_value(self.order)
+        new_cost, _, new_individual_costs = self.calculate_objective_value(new_order)
+
+        # Calculate the cost of already late tasks before and after adding the new component
+        already_late_cost_before = sum(cost for cost in current_individual_costs if cost > 0)
+        already_late_cost_after = sum(cost for cost in new_individual_costs if cost > 0)
+
+        # Log late tasks with their cost
+        late_tasks_before = [(i, cost) for i, cost in enumerate(current_individual_costs) if cost > 0]
+        late_tasks_after = [(i, cost) for i, cost in enumerate(new_individual_costs) if cost > 0]
+        
+        logging.debug(f"Late tasks before adding component {component.cid}: {late_tasks_before}")
+        logging.debug(f"Late tasks after adding component {component.cid}: {late_tasks_after}")
+
+        # Calculate lookahead cost
+        lookahead_cost = self.calculate_lookahead_cost(new_order, depth=2)
+
+        # Increment includes new cost, the difference in already late costs, and the lookahead cost
+        cost_incr = new_cost - current_cost + (already_late_cost_after - already_late_cost_before) + lookahead_cost
+        logging.debug(f"Component {component.cid} would result in new cost: {new_cost}, increment: {cost_incr}, "
+                    f"already late cost before: {already_late_cost_before}, already late cost after: {already_late_cost_after}, "
+                    f"lookahead cost: {lookahead_cost}")
         return cost_incr
+
     
     def calculate_lookahead_cost(self, order: List[int], depth: int = 1) -> int:
         """Calculate a lookahead cost for the next steps with specified depth."""
