@@ -5,10 +5,20 @@ PROJECT: 3D PRINTING
 - Code foundation
 - Greedy Construction
 - First-improvement local search
+- Best-improvement local search
 - Evaluator compatible
 
 ## TODO:
-- Local search: best-improvement local search
+- heuristic construction
+- ant system
+- beam search
+- grasp
+- ils
+- mmas
+- tls
+- sa
+- other solvers
+
 
 ## HOW TO USE:
 Use the debug mode to see the steps of the algorithm.
