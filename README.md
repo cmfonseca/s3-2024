@@ -4,14 +4,36 @@ PROJECT: 3D PRINTING
 ## IMPLEMENTED SO FAR:
 - Code foundation
 - Greedy Construction
+- First-improvement local search
+
+## TODO:
+- Local search: best-improvement local search
+- Data loader for Weighted Tardiness Scheduling Problem from https://infoicet.ufam.edu.br/benchmark-instances/weighted-tardiness/ (the data format is different from the sample provided in the project)
+- Set the solution for the WT dataset for the Evalutor
 
 ## HOW TO USE:
+Use the debug mode to see the steps of the algorithm.
+
 From pwd: `src/`
+- For the greedy construction:
 ```bash 
 python base.py --log-level debug --input-file '../data/3d-printing/sample.txt' --csearch greedy
 ```
 ```bash 
 python base.py --input-file '../data/3d-printing/sample.txt' --csearch greedy
+```
+
+- For the local search:
+```bash
+python base.py --log-level debug --input-file '../data/3d-printing/sample.txt' --lsearch fi
+```
+```bash
+python base.py --input-file '../data/3d-printing/sample.txt' --lsearch fi
+```
+
+- For the evaluator:
+```bash 
+python evaluators/3d_printing.py '../data/3d-printing/sample.txt' '../data/3d-printing/sample_solution.txt'
 ```
 
 ## PROJECT INFORMATION

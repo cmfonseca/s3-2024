@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import TextIO, Optional, Any, List, Tuple
 from collections.abc import Iterable, Hashable
+import random
 import logging
 
 Objective = Any
@@ -34,15 +35,38 @@ class Component:
         return self.index
 
 class LocalMove:
-    ...
+    def __init__(self, i: int, j: int) -> None:
+        self.i = i
+        self.j = j
+        logging.debug(f"LocalMove created with swap indices: {self.i}, {self.j}")
 
 class Solution:
-    def __init__(self, problem: Problem, order: List[int], objective: int) -> None:
+    def __init__(self, problem: Problem, order: Optional[List[int]] = None, objective: int = 0) -> None:
         self.problem = problem
-        self.order = order
-        self.objective_value = objective
+        self.order = order if order is not None else self.random_permutation_fisher_yates_shuffle()
+        self.objective_value = self.calculate_objective()
         self.best_solutions: List[Tuple[List[int], int, List[int], List[int]]] = []
         self.top_n = 5  # Number of top solutions to track
+
+    def random_permutation_fisher_yates_shuffle(self) -> List[int]:
+        """
+        Generate a random permutation of the components using Fisher-Yates shuffle.
+        """
+        n = self.problem.n
+        p = list(range(n))
+        for i in range(n-1, 0, -1):
+            j = random.randint(0, i)
+            p[i], p[j] = p[j], p[i]
+        logging.debug(f"Initial random permutation with Fisher-Yates shuffle: {p}")
+        return p
+    
+    def random_permutation_sparse_fisher_yates_shuffle(self) -> List[int]:
+        """
+        Generate a random permutation of the components using Sparse Fisher-Yates shuffle.
+        """
+        logging.debug(f"Initial random permutation with Sparse Fisher-Yates shuffle: {p}")
+        raise NotImplementedError
+
 
     def calculate_objective_value(self, order: List[int]) -> Tuple[int, List[int], List[int]]:
         """Calculate the objective value, completion times, and individual costs for a given order."""
@@ -183,6 +207,67 @@ class Solution:
         for idx in remaining:
             yield Component(idx)
 
+    def random_local_moves_wor(self) -> Iterable[LocalMove]:
+        """
+        Return an iterable (generator, iterator, or iterable object)
+        over all local moves (in random order) that can be applied to
+        the solution.
+        """
+        n = len(self.order)
+        if n < 2:
+            logging.debug("Order length less than 2, no local moves possible")
+            return iter([])  # No local moves possible if order length is less than 2
+
+        indices = list(range(n))
+        random.shuffle(indices)
+        logging.debug(f"Generated random order of indices for local moves: {indices}")
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                logging.debug(f"Yielding LocalMove with swap indices: {indices[i]}, {indices[j]}")
+                yield LocalMove(indices[i], indices[j])
+
+    def objective_incr_local(self, lmove: LocalMove) -> Optional[int]:
+        """
+        Return the objective value increment resulting from applying a
+        local move. If the objective value is not defined after
+        applying the local move return None.
+        """
+        i, j = lmove.i, lmove.j
+        if i >= len(self.order) or j >= len(self.order):
+            logging.warning(f"LocalMove indices {i}, {j} are out of bounds for order length {len(self.order)}")
+            return None
+        
+        # Swap the elements at indices i and j
+        new_order = self.order[:]
+        new_order[i], new_order[j] = new_order[j], new_order[i]
+        
+        # Calculate the new objective value
+        current_cost = self.calculate_objective()
+        new_cost, _, _ = self.calculate_objective_value(new_order)
+        cost_incr = new_cost - current_cost
+        
+        logging.debug(f"Objective increment for LocalMove ({i}, {j}): {cost_incr}")
+        return cost_incr
+    
+    def step(self, lmove: LocalMove) -> None:
+        """
+        Apply a local move to the solution.
+
+        Note: this invalidates any previously generated components and
+        local moves.
+        """
+        i, j = lmove.i, lmove.j
+        if i >= len(self.order) or j >= len(self.order):
+            logging.warning(f"LocalMove indices {i}, {j} are out of bounds for order length {len(self.order)}")
+            return
+        
+        # Apply the swap
+        logging.debug(f"Applying LocalMove with swap indices: {i}, {j}")
+        self.order[i], self.order[j] = self.order[j], self.order[i]
+        self.objective_value = self.calculate_objective()
+        logging.debug(f"New order after LocalMove: {self.order}, New objective value: {self.objective_value}")
+
     def lower_bound(self) -> Optional[Objective]:
         """
         Return the lower bound value for this solution if defined,
@@ -205,36 +290,11 @@ class Solution:
         local move.
         """
         raise NotImplementedError
-
-    def random_local_moves_wor(self) -> Iterable[LocalMove]:
-        """
-        Return an iterable (generator, iterator, or iterable object)
-        over all local moves (in random order) that can be applied to
-        the solution.
-        """
-        raise NotImplementedError
             
     def heuristic_add_move(self) -> Optional[Component]:
         """
         Return the next component to be added based on some heuristic
         rule.
-        """
-        raise NotImplementedError
-
-    def step(self, lmove: LocalMove) -> None:
-        """
-        Apply a local move to the solution.
-
-        Note: this invalidates any previously generated components and
-        local moves.
-        """
-        raise NotImplementedError
-
-    def objective_incr_local(self, lmove: LocalMove) -> Optional[Objective]:
-        """
-        Return the objective value increment resulting from applying a
-        local move. If the objective value is not defined after
-        applying the local move return None.
         """
         raise NotImplementedError
 
@@ -252,6 +312,7 @@ class Problem:
         self.w = weights
         self.d = due_dates
         self.n = len(processing_times)
+        self.use_local_search = '--lsearch' in sys.argv and sys.argv[sys.argv.index('--lsearch') + 1] != 'none'
 
     @classmethod
     def from_textio(cls, f: TextIO) -> Problem:
@@ -269,10 +330,15 @@ class Problem:
 
     def empty_solution(self) -> Solution:
         """
-        Create an empty solution (i.e. with no components).
+        Create a solution based on the presence of local search methods.
         """
-        return Solution(self, [], 0)
-
+        if self.use_local_search:
+            initial_order = list(range(self.n))
+            random.shuffle(initial_order)
+            logging.debug(f"Initial random permutation: {initial_order}")
+            return Solution(self, initial_order, 0)
+        else:
+            return Solution(self, [], 0)
 
 if __name__ == '__main__':
     from api.solvers import *
@@ -340,11 +406,12 @@ if __name__ == '__main__':
         print(s.output(), file=args.output_file)
         if s.objective() is not None:
             logging.info(f"Objective: {s.objective():.3f}")
-            logging.info("Best solutions found:")
-            for order, cost, completion_times, individual_costs in s.best_solutions:
-                adjusted_order = [x + 1 for x in order]
-                logging.info(f"Order: {adjusted_order}, Cost: {cost}, Completion times: {completion_times}")
-                logging.info(f"Cost calculation details: {[f'{adjusted_order[i]}: {individual_costs[i]}' for i in range(len(order))]}")
+            if not p.use_local_search:
+                logging.info("Best solutions found:")
+                for order, cost, completion_times, individual_costs in s.best_solutions:
+                    adjusted_order = [x + 1 for x in order]
+                    logging.info(f"Component addition: Order: {adjusted_order}, Cost: {cost}, Completion times: {completion_times}")
+                    logging.info(f"Cost calculation details: {[f'{adjusted_order[i]}: {individual_costs[i]}' for i in range(len(order))]}")
         else:
             logging.info(f"Objective: None")
     else:
