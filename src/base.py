@@ -340,7 +340,11 @@ class Solution:
         Note: repeated calls to this method may return the same
         local move.
         """
-        raise NotImplementedError
+        i = random.randint(1, self.problem.n)
+        j = i
+        while j == i:
+            j = random.randint(1, self.problem.n)
+        raise LocalMove(i,j)
             
     def heuristic_add_move(self) -> Optional[Component]:
         """
