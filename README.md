@@ -6,22 +6,20 @@ PROJECT: 3D PRINTING
 - Evaluator compatible
 - Constructive search
   - Greedy Construction
+  - Heuristic construction (choose between EDD: Earliest Due Date, SPT: Shortest Processing Time, Priority: Smallest Weight, MST: Minimum Slack Time, WSPT: Weighted Shortest Processing Time)
   - GRASP
   - Ant System
   - MMAS
+  - Beam
 - Local Search
   - First-improvement 
   - Best-improvement
   - RLS
   - SA
+  - ILS
 
 
 ## TODO:
-- Constructive search
-  - heuristic construction
-  - beam search
-- Local Search
-  - ILS
 - Other Solvers for fun like i-race
 
 

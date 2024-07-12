@@ -309,6 +309,7 @@ class Solution:
             for j in range(i + 1, n):
                 yield LocalMove(i, j)
 
+
     def lower_bound(self) -> Optional[Objective]:
         """
         Return the lower bound value for this solution if defined,
@@ -316,7 +317,7 @@ class Solution:
         """
         # Weak lower bound: weighted tardiness so far
         lower_bound = self.calculate_objective()
-
+#
         # Making it stronger could entail summing up the tardiness of the other elements
         # if they were to be run in parallel
         # Iterate through the indices of all object and consider those not yet in the order
@@ -332,7 +333,30 @@ class Solution:
                 lower_bound += self.problem.w[j] * T
 
         return lower_bound
-
+    
+    # same as above, but with different names
+    #def lower_bound(self) -> Optional[Objective]:
+    #    """
+    #    Return the lower bound value for this solution if defined,
+    #    otherwise return None
+    #    """
+#
+    #    # Weak lower bound: weighted tardiness so far
+    #    lower_bound = self.calculate_objective()
+    #    current_completion_time = sum(self.problem.p[i] for i in self.order)
+#
+    #    # Iterate through the indices of all objects and consider those not yet in the order
+    #    for j in range(self.problem.n):
+    #        if j not in self.order:
+    #            # Calculate completion time if this element were added next
+    #            completion_time = current_completion_time + self.problem.p[j]
+    #            # Calculate tardiness for this element
+    #            tardiness = max(completion_time - self.problem.d[j], 0)
+    #            # Update the lower bound with the weighted tardiness of the element
+    #            lower_bound += self.problem.w[j] * tardiness
+#
+    #    return lower_bound
+    
     def random_local_move(self) -> Optional[LocalMove]:
         """
         Return a random local move that can be applied to the solution.
@@ -340,18 +364,16 @@ class Solution:
         Note: repeated calls to this method may return the same
         local move.
         """
-        i = random.randint(1, self.problem.n)
-        j = i
-        while j == i:
-            j = random.randint(1, self.problem.n)
-        raise LocalMove(i,j)
-            
-    def heuristic_add_move(self) -> Optional[Component]:
-        """
-        Return the next component to be added based on some heuristic
-        rule.
-        """
-        raise NotImplementedError
+        if len(self.order) < 2:
+            return None  # No local move possible if the order has fewer than 2 elements
+
+        # Generate a random permutation of indices using the custom Fisher-Yates shuffle
+        random_indices = self.random_permutation_sparse_fisher_yates_shuffle()
+
+        # Select the first two indices from the random permutation
+        i, j = random_indices[:2]
+
+        return LocalMove(i, j)
 
     def perturb(self, ks: int) -> None:
         """
@@ -359,7 +381,123 @@ class Solution:
         controlled by the parameter ks (kick strength)
         """
         for _ in range(ks):
-            self.random_local_move()
+            local_move = self.random_local_move()
+            if local_move:
+                self.step(local_move)
+
+    def heuristic_add_move(self) -> Optional[Component]:
+        """
+        Return the next component to be added based on a heuristic rule.
+        """
+        # Choose one of the heuristics to use:
+
+        # EDD: Earliest Due Date
+        return self.heuristic_edd()
+
+        # SPT: Shortest Processing Time
+        #return self.heuristic_spt()
+
+        # Priority: Smallest Weight
+        #return self.heuristic_priority()
+
+        # MST: Minimum Slack Time
+        #return self.heuristic_mst()
+
+        # WSPT: Weighted Shortest Processing Time
+        #return self.heuristic_wspt()
+
+    def heuristic_edd(self) -> Optional[Component]:
+        logging.debug(f"Selecting component based on Earliest Due Date (EDD)")
+        min_due_date = float('inf')
+        selected_component = None
+
+        for idx in range(self.problem.n):
+            if idx not in self.order:
+                due_date = self.problem.d[idx]
+                if due_date < min_due_date:
+                    min_due_date = due_date
+                    selected_component = Component(idx)
+
+        return selected_component
+
+    def heuristic_spt(self) -> Optional[Component]:
+        logging.debug(f"Selecting component based on Shortest Processing Time (SPT)")
+        min_processing_time = float('inf')
+        selected_component = None
+
+        for idx in range(self.problem.n):
+            if idx not in self.order:
+                processing_time = self.problem.p[idx]
+                if processing_time < min_processing_time:
+                    min_processing_time = processing_time
+                    selected_component = Component(idx)
+
+        return selected_component
+
+    def heuristic_priority(self) -> Optional[Component]:
+        logging.debug(f"Selecting component based on Priority (Smallest Weight)")
+        min_weight = float('inf')
+        selected_component = None
+
+        for idx in range(self.problem.n):
+            if idx not in self.order:
+                weight = self.problem.w[idx]
+                if weight < min_weight:
+                    min_weight = weight
+                    selected_component = Component(idx)
+
+        return selected_component
+
+    def heuristic_mst(self) -> Optional[Component]:
+        logging.debug(f"Selecting component based on Minimum Slack Time (MST)")
+        min_slack_time = float('inf')
+        selected_component = None
+
+        for idx in range(self.problem.n):
+            if idx not in self.order:
+                slack_time = self.problem.d[idx] - self.problem.p[idx]
+                if slack_time < min_slack_time:
+                    min_slack_time = slack_time
+                    selected_component = Component(idx)
+
+        return selected_component
+
+    def heuristic_wspt(self) -> Optional[Component]:
+        logging.debug(f"Selecting component based on Weighted Shortest Processing Time (WSPT)")
+        min_ratio = float('inf')
+        selected_component = None
+
+        for idx in range(self.problem.n):
+            if idx not in self.order:
+                ratio = self.problem.p[idx] / self.problem.w[idx]
+                if ratio < min_ratio:
+                    min_ratio = ratio
+                    selected_component = Component(idx)
+
+        return selected_component
+
+    #bugged
+    #def random_local_move(self) -> Optional[LocalMove]:
+    #    """
+    #    Return a random local move that can be applied to the solution.
+#
+    #    Note: repeated calls to this method may return the same
+    #    local move.
+    #    """
+    #    i = random.randint(1, self.problem.n)
+    #    j = i
+    #    while j == i:
+    #        j = random.randint(1, self.problem.n)
+    #    raise LocalMove(i,j)
+
+    #bugged
+    #def perturb(self, ks: int) -> None:
+    #    """
+    #    Perturb the solution in place. The amount of perturbation is
+    #    controlled by the parameter ks (kick strength)
+    #    """
+    #    for _ in range(ks):
+    #        self.random_local_move()
 
 
 class Problem:
