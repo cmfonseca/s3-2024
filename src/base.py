@@ -314,7 +314,24 @@ class Solution:
         Return the lower bound value for this solution if defined,
         otherwise return None
         """
-        raise NotImplementedError
+        # Weak lower bound: weighted tardiness so far
+        lower_bound = self.calculate_objective()
+
+        # Making it stronger could entail summing up the tardiness of the other elements
+        # if they were to be run in parallel
+        # Iterate through the indices of all object and consider those not yet in the order
+        for j in range(self.problem.n):
+            if j not in self.order:
+                # Add the weighted tardiness of that element wrt the current processing time
+                order_copy = self.order.copy()
+                order_copy.append(j)
+                C = 0
+                for k in order_copy:
+                    C += self.problem.p[k]
+                T = max([C - self.problem.d[j], 0])
+                lower_bound += self.problem.w[j] * T
+
+        return lower_bound
 
     def random_local_move(self) -> Optional[LocalMove]:
         """
