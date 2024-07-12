@@ -358,7 +358,8 @@ class Solution:
         Perturb the solution in place. The amount of perturbation is
         controlled by the parameter ks (kick strength)
         """
-        raise NotImplementedError
+        for _ in range(ks):
+            self.random_local_move()
 
 
 class Problem:
