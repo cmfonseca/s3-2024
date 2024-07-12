@@ -41,7 +41,7 @@ class LocalMove:
         logging.debug(f"LocalMove created with swap indices: {self.i}, {self.j}")
 
 class Solution:
-    def __init__(self, problem: Problem, order: Optional[List[int]] = None, objective: int = 0) -> None:
+    def __init__(self, problem: Problem, order: Optional[List[int]] = None) -> None:
         self.problem = problem
         self.order = order if order is not None else self.random_permutation_sparse_fisher_yates_shuffle()
         self.objective_value = self.calculate_objective()
@@ -181,7 +181,7 @@ class Solution:
         Note: changes to the copy must not affect the original
         solution. However, this does not need to be a deepcopy.
         """
-        return Solution(self.problem, self.order[:], self.objective_value)
+        return Solution(self.problem, self.order[:])
 
     def is_feasible(self) -> bool:
         """
@@ -396,9 +396,9 @@ class Problem:
             # random.shuffle(initial_order)
             initial_order = list(Solution(self).random_permutation_sparse_fisher_yates_shuffle())
             logging.debug(f"Initial random permutation: {initial_order}")
-            return Solution(self, initial_order, 0)
+            return Solution(self, initial_order)
         else:
-            return Solution(self, [], 0)
+            return Solution(self, [])
 
 if __name__ == '__main__':
     from api.solvers import *
